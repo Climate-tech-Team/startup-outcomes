@@ -1,8 +1,7 @@
 # Code to perform robustness checks and generate table output for regressions
-# Must be run after 1.cox_proportional_hazards.R
+# Must be run after 3.cox_proportional_hazards.R
 # Kathleen Kennedy 2022
 ########################################################################
-
 
 cleantech1 <- newhaz1 %>% filter(Year.Founded <= 2011)
 cleantech2 <- newhaz1 %>% filter(Year.Founded >= 2012)
@@ -27,6 +26,7 @@ cleantech1_exits <- coxph(Surv(tstart,tstop,success) ~ CVC + Oth_inv +
                             strata(Year.Founded), 
                           data=cleantech1, cluster=ID)
 summary(cleantech1_exits)
+# Check assumptions
 temp <- cox.zph(cleantech1_exits) 
 print(temp)
 tbl_regression(cleantech1_exits,exponentiate = TRUE, 
@@ -46,6 +46,7 @@ cleantech2_exits <- coxph(Surv(tstart,tstop,success) ~ CVC + Oth_inv +
                             strata(Year.Founded), 
                           data=cleantech2, cluster=ID)
 summary(cleantech2_exits)
+# Check assumptions
 temp <- cox.zph(cleantech2_exits) 
 print(temp)
 tbl_regression(cleantech2_exits,exponentiate = TRUE, 
@@ -66,6 +67,7 @@ patenthigh_exits <- coxph(Surv(tstart,tstop,success) ~ CVC + Oth_inv +
                             strata(Year.Founded), 
                           data=patenthigh, cluster=ID)
 summary(patenthigh_exits)
+# Check assumptions
 temp <- cox.zph(patenthigh_exits) 
 print(temp)
 tbl_regression(patenthigh_exits,exponentiate = TRUE, 
@@ -84,6 +86,7 @@ patentlow_exits <- coxph(Surv(tstart,tstop,success) ~ CVC + Oth_inv +
                             strata(Year.Founded), 
                           data=patentlow, cluster=ID)
 summary(patentlow_exits)
+# Check assumptions
 temp <- cox.zph(patentlow_exits) 
 print(temp)
 tbl_regression(patentlow_exits,exponentiate = TRUE, 
@@ -109,6 +112,7 @@ cleantech1_fail <- coxph(Surv(tstart,tstop,failure) ~ CVC + Oth_inv +
                             strata(Year.Founded), 
                           data=cleantech1, cluster=ID)
 summary(cleantech1_fail)
+# Check assumptions
 temp <- cox.zph(cleantech1_fail) 
 print(temp)
 tbl_regression(cleantech1_fail,exponentiate = TRUE, 
@@ -128,6 +132,7 @@ cleantech2_fail <- coxph(Surv(tstart,tstop,failure) ~ CVC + Oth_inv +
                            strata(Year.Founded), 
                          data=cleantech2, cluster=ID)
 summary(cleantech2_fail)
+# Check assumptions
 temp <- cox.zph(cleantech2_fail) 
 print(temp)
 tbl_regression(cleantech2_fail,exponentiate = TRUE, 
@@ -147,6 +152,7 @@ patenthigh_fail <- coxph(Surv(tstart,tstop,failure) ~ CVC + Oth_inv +
                             strata(Year.Founded), 
                           data=patenthigh, cluster=ID)
 summary(patenthigh_fail)
+# Check assumptions
 temp <- cox.zph(patenthigh_fail) 
 print(temp)
 tbl_regression(patenthigh_fail,exponentiate = TRUE, 
@@ -165,6 +171,7 @@ patentlow_fail <- coxph(Surv(tstart,tstop,failure) ~ CVC + Oth_inv +
                            strata(Year.Founded), 
                          data=patentlow, cluster=ID)
 summary(patentlow_fail)
+# Check assumptions
 temp <- cox.zph(patentlow_fail) 
 print(temp)
 tbl_regression(patentlow_fail,exponentiate = TRUE, 

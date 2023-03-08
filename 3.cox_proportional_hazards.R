@@ -118,7 +118,8 @@ ggcoxzph(temp, font.main = 9, font.submain = 9,font.y=9,font.x=9, font.tickslab=
 ggcoxdiagnostics(myCph1s, type = "dfbeta", 
                  linear.predictions = FALSE, ggtheme = theme_bw()) 
 
-ggcoxfunctional(Surv(tstart,tstop,success) ~ patent_time + log1p(patent_time) + sqrt(patent_time), data = newhaz1) # check linearity...
+# Check linearity of different transformations of patent data
+ggcoxfunctional(Surv(tstart,tstop,success) ~ patent_time + log1p(patent_time) + sqrt(patent_time), data = newhaz1) 
 
 tbl_regression(myCph1s,exponentiate = TRUE, label = c(CVC ~ 'Corporate Investment',
                                                       Oth_inv ~ "Other Private Investment",
@@ -136,45 +137,6 @@ myFit <- survfit(Surv(tstart,tstop,success) ~ CVC,
 
 myFitpub <- survfit(Surv(tstart,tstop,success) ~ Pub_gr,
                     data=newhaz1, cluster=ID)
-
-ggsurvplot_facet(myFit, data = newhaz1, fun = "cumhaz", conf.int = TRUE,
-                 facet.by = c("Oth_inv",'Pub_gr'), ylim = c(0,1),
-                 font.x = c(7), font.y = c(7), font.tickslab = c(6),
-                 panel.labs.font = list(size = 7),
-                 censor = FALSE, break.y.by = 0.5,
-                 palette = c('#b2182b','#2166ac'),
-               #  title = 'Corporate Investment Impact on Success',
-                 legend.labs = c('No Corporate Investment','Corporate Investment'),
-                 legend.title = "", legend = c("bottom"),
-                 panel.labs = list(Oth_inv = c('No Other Investment', 'Other Investment'), 
-                                   Pub_gr = c('No Public Grant','Public Grant')),
-                 short.panel.labs = TRUE,
-                 xlab = 'Time since founding (yrs)',
-                 ggtheme = theme_minimal()) +
-  theme(legend.key.size = unit(3, units = "mm"),
-        legend.margin=margin(t=-2, r=0, b=0, l=0, unit="mm"),
-        plot.margin = unit(x = c(0,-2, 0, 0), units = "mm"))
-ggsave(paste0(getwd(), "/figs/model1_s_cvc.png"), 
-       width = 78, height = 74, units = 'mm', dpi = 200) 
-
-ggsurvplot_facet(myFitpub, data = newhaz1, fun = "cumhaz", conf.int = TRUE,
-                 facet.by = c("Oth_inv",'CVC'), ylim = c(0,1),
-                 font.x = c(7), font.y = c(7), font.tickslab = c(6),
-                 panel.labs.font = list(size = 7),
-                 palette = c('#b2182b','#2166ac'),
-                 censor = FALSE, break.y.by = 0.5,
-                 legend.labs = c('No Public Grant','Public Grant'),
-                 legend.title = "", legend = c("bottom"),
-                 panel.labs = list(Oth_inv = c('No Other Investment', 'Other Investment'), 
-                                   CVC = c('No Corporate Investment','Corporate Investment')),
-                 short.panel.labs = TRUE,
-                 xlab = 'Time since founding (yrs)',
-                 ggtheme = theme_minimal()) +
-  theme(legend.key.size = unit(3, units = "mm"),
-        legend.margin=margin(t=-2, r=0, b=0, l=0, unit="mm"),
-        plot.margin = unit(x = c(0,-2, 0, 0), units = "mm"))
-ggsave(paste0(getwd(), "/figs/model1_s_pub.png"), 
-       width = 78, height = 74, units = 'mm', dpi = 200)
 
 # Cumulative hazard plots faceted by year founded
 ggsurvplot_facet(myFit, data = newhaz1, fun = "cumhaz", conf.int = TRUE, facet.by = "Year.Founded",
@@ -220,14 +182,10 @@ ggsave(paste0(getwd(), "/figs/model1_s_sectors.png"), width = 6.5, height = 5)
 
 
 sect_check <- newhaz1 %>% filter(Sector %in% c('energy efficiency','transportation',
-                                            #   'agriculture & food','energy storage',
-                                            #   'wind'))
                                                'advanced materials','other cleantech',
                                                'solar','agriculture & food'))
 sect_check <- sect_check %>% 
   mutate(Sector = factor(Sector, levels = c('energy efficiency','transportation',
-                                         #   'agriculture & food','energy storage',
-                                        #    'wind')))
                                             'advanced materials','other cleantech',
                                             'solar','agriculture & food')))
 
@@ -283,8 +241,9 @@ myCph1f <- coxph(Surv(tstart,tstop,failure) ~ CVC + Oth_inv +
                  data=newhaz1, cluster=ID)
 
 summary(myCph1f)
+# Chech assumptions
 temp2 <- cox.zph(myCph1f) 
-print(temp2)                  # display the results 
+print(temp2)            
 plot(temp2, var=4)
 
 tbl_regression(myCph1f,exponentiate = TRUE, label = c(CVC ~ 'Corporate investment',
@@ -303,47 +262,6 @@ myFit <- survfit(Surv(tstart,tstop,failure) ~ CVC,
 
 myFitpub <- survfit(Surv(tstart,tstop,failure) ~ Pub_gr,
                     data=newhaz1, cluster=ID)
-
-ggsurvplot_facet(myFit, data = newhaz1, fun = "cumhaz", conf.int = TRUE,
-                 facet.by = c("Oth_inv",'Pub_gr'), ylim = c(0,1.25),
-                 font.x = c(7), font.y = c(7), font.tickslab = c(6),
-                 panel.labs.font = list(size = 7),
-                 palette = c('#b2182b','#2166ac'),
-                 censor = FALSE, break.y.by = 0.5,
-              #   title = 'Corporate Investment Impact on Failure',
-                 legend.labs = c('No CVC Investment','CVC Investment'),
-                 legend.title = "", legend = c("bottom"),
-                 panel.labs = list(Oth_inv = c('No Other Investment', 'Other Investment'), 
-                                   Pub_gr = c('No Public Grant','Public Grant')),
-                 short.panel.labs = TRUE,
-                 xlab = 'Time since founding (yrs)',
-                 ggtheme = theme_minimal()) +
-  theme(legend.key.size = unit(3, units = "mm"),
-        legend.margin=margin(t=-2, r=0, b=0, l=0, unit="mm"),
-        plot.margin = unit(x = c(0,-2, 0, 0), units = "mm"))
-ggsave(paste0(getwd(), "/figs/model1_f_cvc.png"), 
-       width = 78, height = 74, units = 'mm', dpi = 200)
-
-
-ggsurvplot_facet(myFitpub, data = newhaz1, fun = "cumhaz", conf.int = TRUE,
-                 facet.by = c("Oth_inv",'CVC'), ylim = c(0,1.25),
-                 font.x = c(7), font.y = c(7), font.tickslab = c(6),
-                 panel.labs.font = list(size = 7),
-                 censor = FALSE, break.y.by = 0.5,
-                 palette = c('#b2182b','#2166ac'),
-               #  title = 'Public Grant Impact on Failure',
-                 legend.labs = c('No Public Grant','Public Grant'),
-                 legend.title = "", legend = c("bottom"),
-                 panel.labs = list(Oth_inv = c('No Other Investment', 'Other Investment'), 
-                                   CVC = c('No Corporate Investment','Corporate Investment')),
-                 short.panel.labs = TRUE,
-                 xlab = 'Time since founding (yrs)',
-                 ggtheme = theme_minimal()) +
-  theme(legend.key.size = unit(3, units = "mm"),
-        legend.margin=margin(t=-2, r=0, b=0, l=0, unit="mm"),
-        plot.margin = unit(x = c(0,-2, 0, 0), units = "mm"))
-ggsave(paste0(getwd(), "/figs/model1_f_pub.png"), 
-       width = 78, height = 74, units = 'mm', dpi = 200)
 
 # Cumulative hazard plots faceted by year founded
 ggsurvplot_facet(myFit, data = newhaz1, fun = "cumhaz", conf.int = TRUE, facet.by = "Year.Founded",
@@ -377,9 +295,6 @@ myFit <- survfit(Surv(tstart,tstop,failure) ~ CVC,
 myFitpub <- survfit(Surv(tstart,tstop,failure) ~ Pub_gr,
                     data=sect_check, cluster=ID)
 
-#ggsurv <- ggsurvplot(myFitpub, fun = "cumhaz", conf.int = TRUE)
-#ggsurv$plot +theme_bw() + facet_grid(~Sector) + theme(legend.position="none")
-
 sect_f_corp <- ggsurvplot_facet(myFit, data = sect_check, fun = "cumhaz", conf.int = TRUE, 
                                 facet.by = "Sector", censor = FALSE, ylim = c(0,1.5),
                                 title = 'd. Corporate Investment Impact on Failure', 
@@ -394,7 +309,6 @@ sect_f_corp <- ggsurvplot_facet(myFit, data = sect_check, fun = "cumhaz", conf.i
   theme(legend.text=element_text(size=7),
         legend.margin=margin(t=0, r=0, b=0, l=0, unit="mm"),
         legend.position="right")
-#ggsave(paste0(getwd(), "/figs/model1_f_sectors.png"), width = 6.5, height = 5)
 
 sect_f_pub <- ggsurvplot_facet(myFitpub, data = sect_check, fun = "cumhaz", conf.int = TRUE, 
                                facet.by = "Sector", censor = FALSE, ylim = c(0,1.5),
@@ -410,78 +324,6 @@ sect_f_pub <- ggsurvplot_facet(myFitpub, data = sect_check, fun = "cumhaz", conf
   theme(legend.text=element_text(size=7),
         legend.margin=margin(t=0, r=0, b=0, l=0, unit="mm"),
         legend.position="right")
-#ggsave(paste0(getwd(), "/figs/model1_f_sectors_pub.png"), width = 6.5, height = 5)
-#############################################
-# IPO - Cox proportional hazards regression #
-#############################################
-myCph1i <- coxph(Surv(tstart,tstop,ipo) ~ CVC + Oth_inv +
-                   Pub_gr + patent_time + Location + 
-                   strata(Sector) + strata(Year.Founded), 
-                 data=newhaz1, cluster=ID)
-summary(myCph1i)
-
-#############################################
-# MA - Cox proportional hazards regression  #
-#############################################
-myCph1m <- coxph(Surv(tstart,tstop,ma) ~ CVC + Oth_inv +
-                   Pub_gr + patent_time + Location + 
-                   strata(Sector) + strata(Year.Founded), 
-                 data=newhaz1, cluster=ID)
-summary(myCph1m)
-
-###################################################
-# Survival - Cox proportional hazards regression  #
-###################################################
-newhaz1surv <- newhaz1 %>%
-  filter(age > 5)
-myCph1surv <- coxph(Surv(tstart,tstop,outcome) ~ CVC + Oth_inv +
-                   Pub_gr + patent_time + Location + 
-                   strata(Sector) + strata(Year.Founded), 
-                 data=newhaz1surv, cluster=ID)
-summary(myCph1surv)
-
-myFitpub <- survfit(Surv(tstart,tstop,outcome) ~ Pub_gr,
-                    data=newhaz1surv, cluster=ID)
-ggsurvplot_facet(myFitpub, data = newhaz1surv, conf.int = TRUE,
-                 facet.by = c("Oth_inv",'CVC'), ylim = c(0,1),
-                 font.x = c(7), font.y = c(7), font.tickslab = c(6),
-                 panel.labs.font = list(size = 7),
-                 censor = FALSE, break.y.by = 0.5,
-                 # title = 'Public Grant Impact on Success',
-                 legend.labs = c('No Public Grant','Public Grant'),
-                 legend.title = "", legend = c("bottom"),
-                 panel.labs = list(Oth_inv = c('No Other Investment', 'Other Investment'), 
-                                   CVC = c('No Corporate Investment','Corporate Investment')),
-                 short.panel.labs = TRUE,
-                 xlab = 'Time since founding (yrs)',
-                 ggtheme = theme_minimal()) +
-  theme(legend.key.size = unit(3, units = "mm"),
-        legend.margin=margin(t=-2, r=0, b=0, l=0, unit="mm"),
-        plot.margin = unit(x = c(0,-2, 0, 0), units = "mm"))
-ggsave(paste0(getwd(), "/figs/model1_surv_pub.png"), 
-       width = 78, height = 74, units = 'mm', dpi = 200)
-
-myFit <- survfit(Surv(tstart,tstop,outcome) ~ CVC,
-                 data=newhaz1surv, cluster=ID)
-
-ggsurvplot_facet(myFit, data = newhaz1surv, conf.int = TRUE,
-                 facet.by = c("Oth_inv",'Pub_gr'), ylim = c(0,1),
-                 font.x = c(7), font.y = c(7), font.tickslab = c(6),
-                 panel.labs.font = list(size = 7),
-                 censor = FALSE, break.y.by = 0.5,
-                 #  title = 'Corporate Investment Impact on Success',
-                 legend.labs = c('No CVC Investment','CVC Investment'),
-                 legend.title = "", legend = c("bottom"),
-                 panel.labs = list(Oth_inv = c('No Other Investment', 'Other Investment'), 
-                                   Pub_gr = c('No Public Grant','Public Grant')),
-                 short.panel.labs = TRUE,
-                 xlab = 'Time since founding (yrs)',
-                 ggtheme = theme_minimal()) +
-  theme(legend.key.size = unit(3, units = "mm"),
-        legend.margin=margin(t=-2, r=0, b=0, l=0, unit="mm"),
-        plot.margin = unit(x = c(0,-2, 0, 0), units = "mm"))
-ggsave(paste0(getwd(), "/figs/model1_surv_cvc.png"), 
-       width = 78, height = 74, units = 'mm', dpi = 200)
 
 ##############################################################
 #                                                            #
@@ -503,10 +345,11 @@ myCph2s <- coxph(Surv(tstart,tstop,success) ~ CVC + Oth_inv +
                  data=newhaz2, cluster=ID)
 
 summary(myCph2s)
+# Check assumptions
 temp <- cox.zph(myCph2s) 
-print(temp)                  # display the results 
+print(temp)                  
 plot(temp, var=2)
-#ggcoxzph(temp, font.main = 9, font.submain = 9,font.y=9,font.x=9, font.tickslab=9) #+
+#ggcoxzph(temp, font.main = 9, font.submain = 9,font.y=9,font.x=9, font.tickslab=9) 
 
 tbl_regression(myCph2s,exponentiate = TRUE, label = c(CVC ~ 'Corporate Investment',
                                                       Oth_inv ~ "Other Private Investment",
@@ -521,13 +364,8 @@ myFit <- survfit(Surv(tstart,tstop,success) ~ CVC,
                  data=newhaz2, cluster=ID)
 s2 <- ggsurvplot(myFit, data = newhaz2, fun = "cumhaz", conf.int = TRUE, #facet.by = 'Oth_inv',
            title = 'Exits: Start-ups with Public Grants', ylim = c(0,.75), censor = TRUE,
-          # ncensor.plot = TRUE, ncensor.plot.height = 0.33,
-          # cumevents = TRUE,
-          # cumcensor = TRUE,
-          # risk.table = "abs_pct",
            legend.labs = c('No CVC Investment','CVC Investment'),
            legend.title = "", legend = c("none"),
-         #  panel.labs = list(Oth_inv = c('No Other Investment', 'Other Investment')),
            short.panel.labs = TRUE,
            ggtheme = theme_minimal())
 ggsave(paste0(getwd(), "/figs/model2_s.png"), width = 6, height = 4)
@@ -536,18 +374,9 @@ ggsave(paste0(getwd(), "/figs/model2_s.png"), width = 6, height = 4)
 ggsurvplot_facet(myFit, data = newhaz2, fun = "cumhaz", conf.int = TRUE, 
            title = 'Corporate Investment Impact on Success', facet.by = "Sector",
            legend.labs = c('No Corporate Investment','Corporate Investment'),
-        #   legend.labs=c('Unknown','Advanced Materials',
-         #                'Agriculture & Food', 'Air',
-          #               'Biofuels & Biochemicals','Biomass Generation',
-           #              'Conventional Fuels','Energy Efficiency',
-            #             'Energy Storage','Fuel Cells & Hydrogen',
-             #            'Geothermal','Hydro & Marine Power',
-              #           'Nuclear','Other Cleantech',
-               #          'Recyling & Waste','Smart Grid',
-                #         'Solar','Transportation',
-                 #        'Water & Wastewater','Wind'),
            ggtheme = theme_minimal())
 ggsave(paste0(getwd(), "/figs/model2_s_sectors.png"), width = 6, height = 4)
+
 #################################################
 # Failure - Cox proportional hazards regression #
 #################################################
@@ -557,8 +386,9 @@ myCph2f <- coxph(Surv(tstart,tstop,failure) ~ CVC + Oth_inv +
                  data=newhaz2, cluster=ID)
 
 summary(myCph2f)
+# Check assumptions
 temp2 <- cox.zph(myCph2f) 
-print(temp2)                  # display the results 
+print(temp2)
 plot(temp2, var=1)
 
 tbl_regression(myCph2f,exponentiate = TRUE, label = c(CVC ~ 'Corporate Investment',
@@ -576,55 +406,6 @@ ggsurvplot(myFitf, data = newhaz2, fun = "cumhaz", conf.int = TRUE,
            title = 'Corporate Investment Impact on Failure',
            ggtheme = theme_minimal())
 
-#############################################
-# IPO - Cox proportional hazards regression #
-#############################################
-myCph2i <- coxph(Surv(tstart,tstop,ipo) ~ CVC + Oth_inv +
-                   Pub_gr + patent_count + Location + 
-                   strata(Sector) + strata(Year.Founded), 
-                 data=newhaz2, cluster=ID)
-summary(myCph2i)
-
-#############################################
-# MA - Cox proportional hazards regression  #
-#############################################
-myCph2m <- coxph(Surv(tstart,tstop,ma) ~ CVC + Oth_inv +
-                   Pub_gr + patent_count + Location + 
-                   strata(Sector) + strata(Year.Founded), 
-                 data=newhaz2, cluster=ID)
-summary(myCph2m)
-
-###################################################
-# Survival - Cox proportional hazards regression  #
-###################################################
-newhaz2surv <- newhaz2 %>%
-  filter(age > 5)
-myCph2surv <- coxph(Surv(tstart,tstop,outcome) ~ CVC + Oth_inv +
-                      patent_time + Location + 
-                      strata(Sector) + strata(Year.Founded), 
-                    data=newhaz2surv, cluster=ID)
-summary(myCph2surv)
-
-myFit <- survfit(Surv(tstart,tstop,outcome) ~ CVC,
-                 data=newhaz2surv, cluster=ID)
-
-ggsurvplot_facet(myFit, data = newhaz2surv, conf.int = TRUE,
-                 facet.by = c("Oth_inv"), ylim = c(0,1),
-                 font.x = c(7), font.y = c(7), font.tickslab = c(6),
-                 panel.labs.font = list(size = 7),
-                 censor = FALSE, break.y.by = 0.5,
-                 #  title = 'Corporate Investment Impact on Success',
-                 legend.labs = c('No CVC Investment','CVC Investment'),
-                 legend.title = "", legend = c("bottom"),
-                 panel.labs = list(Oth_inv = c('No Other Investment', 'Other Investment')),
-                 short.panel.labs = TRUE,
-                 xlab = 'Time since founding (yrs)',
-                 ggtheme = theme_minimal()) +
-  theme(legend.key.size = unit(3, units = "mm"),
-        legend.margin=margin(t=-2, r=0, b=0, l=0, unit="mm"),
-        plot.margin = unit(x = c(0,-2, 0, 0), units = "mm"))
-ggsave(paste0(getwd(), "/figs/model2_surv_cvc.png"), 
-       width = 78, height = 74, units = 'mm', dpi = 200)
 ##############################################################
 #                                                            #
 # Model 3: Start-ups that did not receive any public grants  #
@@ -642,10 +423,11 @@ myCph3s <- coxph(Surv(tstart,tstop,success) ~ CVC + Oth_inv +
                  data=newhaz3, cluster=ID)
 
 summary(myCph3s)
+# Check assumptions
 temp <- cox.zph(myCph3s) 
 print(temp)                  # display the results 
 plot(temp, var=1)
-#ggcoxzph(temp, font.main = 9, font.submain = 9,font.y=9,font.x=9, font.tickslab=9) #+
+#ggcoxzph(temp, font.main = 9, font.submain = 9,font.y=9,font.x=9, font.tickslab=9) 
 
 termplot(myCph2s, term=2, se=TRUE, col.term=1, col.se=1)
 
@@ -667,13 +449,8 @@ ggsave(paste0(getwd(), "/model3_s_cvc.png"), width = 6, height = 4)
 
 s3 <- ggsurvplot(myFit, data = newhaz3, fun = "cumhaz", conf.int = TRUE, #facet.by = 'Oth_inv',
                  title = 'Exits: Start-ups without Public Grants', ylim = c(0,.75), censor = TRUE,
-                 # ncensor.plot = TRUE, ncensor.plot.height = 0.33,
-                 # cumevents = TRUE,
-                 # cumcensor = TRUE,
-                 # risk.table = "abs_pct",
                  legend.title = "", legend = c("bottom"),
                  legend.labs = c('No CVC Investment','CVC Investment'),
-               #  panel.labs = list(Oth_inv = c('No Other Investment', 'Other Investment')),
                  short.panel.labs = TRUE,
                  ggtheme = theme_minimal())
 
@@ -686,6 +463,7 @@ myCph3f <- coxph(Surv(tstart,tstop,failure) ~ CVC + Oth_inv +
                  data=newhaz3, cluster=ID)
 
 summary(myCph3f)
+# Check assumptions
 temp2 <- cox.zph(myCph3f) 
 print(temp2)                  # display the results 
 plot(temp2, var=1)
@@ -696,55 +474,6 @@ ggsurvplot(myFitf, data = newhaz3, fun = "cumhaz", conf.int = TRUE,
            title = 'Corporate Investment Impact on Failure',
            ggtheme = theme_minimal())
 
-#############################################
-# IPO - Cox proportional hazards regression #
-#############################################
-myCph3i <- coxph(Surv(tstart,tstop,ipo) ~ CVC + Oth_inv +
-                   Pub_gr + patent_count + Location + 
-                   strata(Sector) + strata(Year.Founded), 
-                 data=newhaz3, cluster=ID)
-summary(myCph3i)
-
-#############################################
-# MA - Cox proportional hazards regression  #
-#############################################
-myCph3m <- coxph(Surv(tstart,tstop,ma) ~ CVC + Oth_inv +
-                   Pub_gr + patent_count + Location + 
-                   strata(Sector) + strata(Year.Founded), 
-                 data=newhaz3, cluster=ID)
-summary(myCph3m)
-
-###################################################
-# Survival - Cox proportional hazards regression  #
-###################################################
-newhaz3surv <- newhaz3 %>%
-  filter(age > 5)
-myCph3surv <- coxph(Surv(tstart,tstop,outcome) ~ CVC + Oth_inv +
-                      patent_time + Location + 
-                      strata(Sector) + strata(Year.Founded), 
-                    data=newhaz3surv, cluster=ID)
-summary(myCph3surv)
-
-myFit <- survfit(Surv(tstart,tstop,outcome) ~ CVC,
-                 data=newhaz3surv, cluster=ID)
-
-ggsurvplot_facet(myFit, data = newhaz3surv, conf.int = TRUE,
-                 facet.by = c("Oth_inv"), ylim = c(0,1),
-                 font.x = c(7), font.y = c(7), font.tickslab = c(6),
-                 panel.labs.font = list(size = 7),
-                 censor = FALSE, break.y.by = 0.5,
-                 #  title = 'Corporate Investment Impact on Success',
-                 legend.labs = c('No CVC Investment','CVC Investment'),
-                 legend.title = "", legend = c("bottom"),
-                 panel.labs = list(Oth_inv = c('No Other Investment', 'Other Investment')),
-                 short.panel.labs = TRUE,
-                 xlab = 'Time since founding (yrs)',
-                 ggtheme = theme_minimal()) +
-  theme(legend.key.size = unit(3, units = "mm"),
-        legend.margin=margin(t=-2, r=0, b=0, l=0, unit="mm"),
-        plot.margin = unit(x = c(0,-2, 0, 0), units = "mm"))
-ggsave(paste0(getwd(), "/figs/model3_surv_cvc.png"), 
-       width = 78, height = 74, units = 'mm', dpi = 200)
 #######################################################################
 #                                                                     #
 # Model 4: Start-ups that received at least one corporate investment  #
@@ -765,10 +494,11 @@ myCph4s <- coxph(Surv(tstart,tstop,success) ~ Oth_inv + Pub_gr +
                  data=newhaz4, cluster=ID)
 
 summary(myCph4s)
+# Check assumptions
 temp <- cox.zph(myCph4s) 
 print(temp)                  # display the results 
 plot(temp, var=1)
-#ggcoxzph(temp, font.main = 9, font.submain = 9,font.y=9,font.x=9, font.tickslab=9) #+
+#ggcoxzph(temp, font.main = 9, font.submain = 9,font.y=9,font.x=9, font.tickslab=9) 
 
 termplot(myCph2s, term=2, se=TRUE, col.term=1, col.se=1)
 
@@ -781,10 +511,6 @@ ggsave(paste0(getwd(), "/model4_s_pub.png"), width = 6, height = 4)
 
 s4 <- ggsurvplot(myFit, data = newhaz4, fun = "cumhaz", conf.int = TRUE, facet.by = 'Oth_inv',
                  title = 'Model 4 (CVC Investment): Success', ylim = c(0,.75), censor = TRUE,
-                 # ncensor.plot = TRUE, ncensor.plot.height = 0.33,
-                 # cumevents = TRUE,
-                 # cumcensor = TRUE,
-                 # risk.table = "abs_pct",
                  legend.title = "", legend = c("bottom"),
                  legend.labs = c('No Public Grant','Public Grant'),
                  panel.labs = list(Oth_inv = c('No Other Investment', 'Other Investment')),
@@ -800,6 +526,7 @@ myCph4f <- coxph(Surv(tstart,tstop,failure) ~ Oth_inv + Pub_gr +
                  data=newhaz4, cluster=ID)
 
 summary(myCph4f)
+# Check assumptions
 temp2 <- cox.zph(myCph4f) 
 print(temp2)                  # display the results 
 plot(temp2, var=1)
@@ -809,55 +536,6 @@ myFitf <- survfit(Surv(tstart,tstop,failure) ~ Pub_gr,
 ggsurvplot(myFitf, data = newhaz4, fun = "cumhaz", conf.int = TRUE, 
            title = 'Public Grant Impact on Failure',
            ggtheme = theme_minimal())
-
-#############################################
-# IPO - Cox proportional hazards regression #
-#############################################
-myCph4i <- coxph(Surv(tstart,tstop,ipo) ~ CVC + Oth_inv +
-                   Pub_gr + patent_count + Location + 
-                   strata(Sector) + strata(Year.Founded), 
-                 data=newhaz4, cluster=ID)
-summary(myCph4i)
-
-#############################################
-# MA - Cox proportional hazards regression  #
-#############################################
-myCph4m <- coxph(Surv(tstart,tstop,ma) ~ CVC + Oth_inv +
-                   Pub_gr + patent_count + Location + 
-                   strata(Sector) + strata(Year.Founded), 
-                 data=newhaz4, cluster=ID)
-summary(myCph4m)
-
-###################################################
-# Survival - Cox proportional hazards regression  #
-###################################################
-newhaz4surv <- newhaz4 %>%
-  filter(age > 5)
-myCph4surv <- coxph(Surv(tstart,tstop,outcome) ~ Oth_inv + Pub_gr +
-                      patent_time + Location + 
-                      strata(Sector) + strata(Year.Founded), 
-                    data=newhaz4surv, cluster=ID)
-summary(myCph4surv)
-
-myFitpub <- survfit(Surv(tstart,tstop,outcome) ~ Pub_gr,
-                    data=newhaz4surv, cluster=ID)
-ggsurvplot_facet(myFitpub, data = newhaz4surv, conf.int = TRUE,
-                 facet.by = c("Oth_inv"), ylim = c(0,1),
-                 font.x = c(7), font.y = c(7), font.tickslab = c(6),
-                 panel.labs.font = list(size = 7),
-                 censor = FALSE, break.y.by = 0.5,
-                 # title = 'Public Grant Impact on Success',
-                 legend.labs = c('No Public Grant','Public Grant'),
-                 legend.title = "", legend = c("bottom"),
-                 panel.labs = list(Oth_inv = c('No Other Investment', 'Other Investment')),
-                 short.panel.labs = TRUE,
-                 xlab = 'Time since founding (yrs)',
-                 ggtheme = theme_minimal()) +
-  theme(legend.key.size = unit(3, units = "mm"),
-        legend.margin=margin(t=-2, r=0, b=0, l=0, unit="mm"),
-        plot.margin = unit(x = c(0,-2, 0, 0), units = "mm"))
-ggsave(paste0(getwd(), "/figs/model4_surv_cvc.png"), 
-       width = 78, height = 74, units = 'mm', dpi = 200)
 
 #######################################################################
 #                                                                     #
@@ -876,10 +554,11 @@ myCph5s <- coxph(Surv(tstart,tstop,success) ~ Oth_inv + Pub_gr +
                  data=newhaz5, cluster=ID)
 
 summary(myCph5s)
+# Check assumptions
 temp <- cox.zph(myCph5s) 
 print(temp)                  # display the results 
 plot(temp, var=1)
-#ggcoxzph(temp, font.main = 9, font.submain = 9,font.y=9,font.x=9, font.tickslab=9) #+
+#ggcoxzph(temp, font.main = 9, font.submain = 9,font.y=9,font.x=9, font.tickslab=9) 
 
 termplot(myCph2s, term=2, se=TRUE, col.term=1, col.se=1)
 
@@ -892,10 +571,6 @@ ggsave(paste0(getwd(), "/model5_s_pub.png"), width = 6, height = 4)
 
 s5 <- ggsurvplot(myFit, data = newhaz5, fun = "cumhaz", conf.int = TRUE, facet.by = 'Oth_inv',
                  title = 'Model 5 (No CVC Investment): Success', ylim = c(0,.75), censor = TRUE,
-                 # ncensor.plot = TRUE, ncensor.plot.height = 0.33,
-                 # cumevents = TRUE,
-                 # cumcensor = TRUE,
-                 # risk.table = "abs_pct",
                  legend.title = "", legend = c("bottom"),
                  legend.labs = c('No Public Grant','Public Grant'),
                  panel.labs = list(Oth_inv = c('No Other Investment', 'Other Investment')),
@@ -910,6 +585,7 @@ myCph5f <- coxph(Surv(tstart,tstop,failure) ~ Oth_inv + Pub_gr +
                  data=newhaz5, cluster=ID)
 
 summary(myCph5f)
+# Check assumptions
 temp2 <- cox.zph(myCph5f) 
 print(temp2)                  # display the results 
 plot(temp2, var=1)
@@ -919,55 +595,6 @@ myFitf <- survfit(Surv(tstart,tstop,failure) ~ Pub_gr,
 ggsurvplot(myFitf, data = newhaz5, fun = "cumhaz", conf.int = TRUE, 
            title = 'Public Grant Impact on Failure',
            ggtheme = theme_minimal())
-
-#############################################
-# IPO - Cox proportional hazards regression #
-#############################################
-myCph5i <- coxph(Surv(tstart,tstop,ipo) ~ CVC + Oth_inv +
-                   Pub_gr + patent_count + Location + 
-                   strata(Sector) + strata(Year.Founded), 
-                 data=newhaz5, cluster=ID)
-summary(myCph5i)
-
-#############################################
-# MA - Cox proportional hazards regression  #
-#############################################
-myCph5m <- coxph(Surv(tstart,tstop,ma) ~ CVC + Oth_inv +
-                   Pub_gr + patent_count + Location + 
-                   strata(Sector) + strata(Year.Founded), 
-                 data=newhaz5, cluster=ID)
-summary(myCph5m)
-
-###################################################
-# Survival - Cox proportional hazards regression  #
-###################################################
-newhaz5surv <- newhaz5 %>%
-  filter(age > 5)
-myCph5surv <- coxph(Surv(tstart,tstop,outcome) ~ Oth_inv + Pub_gr +
-                      patent_time + Location + 
-                      strata(Sector) + strata(Year.Founded), 
-                    data=newhaz5surv, cluster=ID)
-summary(myCph5surv)
-
-myFitpub <- survfit(Surv(tstart,tstop,outcome) ~ Pub_gr,
-                    data=newhaz5surv, cluster=ID)
-ggsurvplot_facet(myFitpub, data = newhaz5surv, conf.int = TRUE,
-                 facet.by = c("Oth_inv"), ylim = c(0,1),
-                 font.x = c(7), font.y = c(7), font.tickslab = c(6),
-                 panel.labs.font = list(size = 7),
-                 censor = FALSE, break.y.by = 0.5,
-                 # title = 'Public Grant Impact on Success',
-                 legend.labs = c('No Public Grant','Public Grant'),
-                 legend.title = "", legend = c("bottom"),
-                 panel.labs = list(Oth_inv = c('No Other Investment', 'Other Investment')),
-                 short.panel.labs = TRUE,
-                 xlab = 'Time since founding (yrs)',
-                 ggtheme = theme_minimal()) +
-  theme(legend.key.size = unit(3, units = "mm"),
-        legend.margin=margin(t=-2, r=0, b=0, l=0, unit="mm"),
-        plot.margin = unit(x = c(0, 0, 0, 0), units = "mm"))
-ggsave(paste0(getwd(), "/figs/model5_surv_cvc.png"), 
-       width = 78, height = 74, units = 'mm', dpi = 200)
 
 ############################################################################
 # Combined plots
@@ -982,6 +609,3 @@ ggarrange(s4, s5, ncol = 1, nrow = 2, common.legend = TRUE, legend = c('bottom')
 ggsave(paste0(getwd(), "/figs/mod4_mod5_s.png"), width = 6, height = 5)
 
 ############################################################################
-# Code to look at duplicate rows
-n_occur <- data.frame(table(logit_df$ID))
-logit_df[logit_df$ID %in% n_occur$Var1[n_occur$Freq > 1],]
