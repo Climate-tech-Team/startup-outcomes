@@ -12,22 +12,22 @@ library(broom)
 #===================================
 
 # Model 1 - all startups with at least one funding source
-haz_df1 <- read.csv(paste0(dirname(getwd()),'/outputs/hazard_data.csv')) %>%
+haz_df1 <- read.csv(paste0(getwd(),'/outputs/hazard_data.csv')) %>%
   mutate(age = 2021 - Year.Founded)
 # Model 2 - All startups with at least one public grant
-haz_df2 <- read.csv(paste0(dirname(getwd()),'/outputs/hazard_data.csv')) %>%
+haz_df2 <- read.csv(paste0(getwd(),'/outputs/hazard_data.csv')) %>%
   filter(Public_grant_bin == 1) %>%
   mutate(age = 2021 - Year.Founded)
 # Model 3 - All startups with no public funding
-haz_df3 <- read.csv(paste0(dirname(getwd()),'/outputs/hazard_data.csv')) %>%
+haz_df3 <- read.csv(paste0(getwd(),'/outputs/hazard_data.csv')) %>%
   filter(Public_grant_bin == 0) %>%
   mutate(age = 2021 - Year.Founded)
 # Model 4 - All startups with at least one investment from a corporation
-haz_df4 <- read.csv(paste0(dirname(getwd()),'/outputs/hazard_data.csv')) %>%
+haz_df4 <- read.csv(paste0(getwd(),'/outputs/hazard_data.csv')) %>%
   filter(CVC_bin == 1) %>%
   mutate(age = 2021 - Year.Founded)
 # Model 5 - All startups with no corporate funding
-haz_df5 <- read.csv(paste0(dirname(getwd()),'/outputs/hazard_data.csv')) %>%
+haz_df5 <- read.csv(paste0(getwd(),'/outputs/hazard_data.csv')) %>%
   filter(CVC_bin == 0) %>%
   mutate(age = 2021 - Year.Founded)
 
@@ -80,30 +80,45 @@ h1 <- ggplot(haz_df1, aes(x=age)) +
   geom_histogram(binwidth = 1,color = 'black', fill = 'gray') + 
   ggtitle('Model 1') + xlab('') +
   ylab('Number of Start-ups') +
-  theme_minimal()
+  theme_minimal() +
+  theme(plot.title = (element_text(hjust = 0.5)),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank())
 h2 <- ggplot(haz_df2, aes(x=age)) + 
   geom_histogram(binwidth = 1,color = 'black', fill = 'gray') + 
   ggtitle('Model 2') + 
   ylab('') + xlab('') +
-  theme_minimal()
+  theme_minimal() +
+  theme(plot.title = (element_text(hjust = 0.5)),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank())
 h3 <- ggplot(haz_df3, aes(x=age)) + 
   geom_histogram(binwidth = 1,color = 'black', fill = 'gray') + 
   ggtitle('Model 3') + 
   xlab('Start-up Age') +
   ylab('') +
-  theme_minimal()
+  theme_minimal() +
+  theme(plot.title = (element_text(hjust = 0.5)),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank())
 h4 <- ggplot(haz_df4, aes(x=age)) + 
   geom_histogram(binwidth = 1,color = 'black', fill = 'gray') + 
   ggtitle('Model 4') + 
   ylab('Number of Start-ups') +
   xlab('Start-up Age') +
-  theme_minimal()
+  theme_minimal() +
+  theme(plot.title = (element_text(hjust = 0.5)),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank())
 h5 <- ggplot(haz_df5, aes(x=age)) + 
   geom_histogram(binwidth = 1,color = 'black', fill = 'gray') + 
   ggtitle('Model 5') + 
   xlab('Start-up Age') +
   ylab('') +
-  theme_minimal()
+  theme_minimal() +
+  theme(plot.title = (element_text(hjust = 0.5)),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank())
 
 ggarrange(h1, h2, h3, h4, h5, ncol = 3, nrow = 2)
 ggsave(paste0(getwd(), "/figs/startup_ages.png"), width = 6.5, height = 3.5, dpi = 200)

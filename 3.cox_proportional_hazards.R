@@ -1,4 +1,6 @@
-# Code to perform Cox Proportional Hazards Regression and generate figures
+# Code to perform Cox Proportional Hazards 
+# regression and generate figures
+#
 # Kathleen Kennedy 2022
 ########################################################################
 library(tidyverse)
@@ -67,6 +69,18 @@ ma <- haz_df1 %>%
 outcome <- haz_df1 %>%
   select(ID,time_to_outcome) %>%
   drop_na() %>% unique()
+nation_bin <- haz_df1 %>%
+  select(ID,t_inv, national_bin) %>%
+  filter(national_bin > 0) %>%
+  unique()
+subnat_bin <- haz_df1 %>%
+  select(ID,t_inv, subnational_bin) %>%
+  filter(subnational_bin > 0) %>%
+  unique()
+inter_bin <- haz_df1 %>%
+  select(ID,t_inv, international_bin) %>%
+  filter(international_bin > 0) %>%
+  unique()
 
 
 newhaz1 <- tmerge(data1=base,data2=end_times,id=ID,tstop=end_period)
@@ -74,6 +88,9 @@ newhaz1 <- tmerge(newhaz1,patent_df,id=ID, patent_time=tdc(t_pat,pat_count))
 newhaz1 <- tmerge(newhaz1,CVC_inv,id=ID, CVC=tdc(t_inv,CVC_bin))
 newhaz1 <- tmerge(newhaz1,Oth_inv,id=ID, Oth_inv=tdc(t_inv,Other_inv_bin))
 newhaz1 <- tmerge(newhaz1,Pub_gr,id=ID, Pub_gr=tdc(t_inv,Pub_grant_bin))
+newhaz1 <- tmerge(newhaz1,nation_bin,id=ID, nation_bin=tdc(t_inv,national_bin))
+newhaz1 <- tmerge(newhaz1,subnat_bin,id=ID, subnat_bin=tdc(t_inv,subnational_bin))
+newhaz1 <- tmerge(newhaz1,inter_bin,id=ID, inter_bin=tdc(t_inv,international_bin))
 
 newhaz1 <- tmerge(newhaz1,patent_df,id=ID, patent_time_cum=cumtdc(t_pat,pat_count)) 
 newhaz1 <- tmerge(newhaz1,CVC_inv,id=ID, CVC_cum=cumtdc(t_inv,CVC_bin))
@@ -102,9 +119,11 @@ newhaz1 <- newhaz1 %>%
 myCph1s <- coxph(Surv(tstart,tstop,success) ~ CVC + Oth_inv +
                    Pub_gr + patent_time + Location + strata(Sector) + 
                    strata(Year.Founded), 
+                 #  +CVC:Pub_gr + Oth_inv:Pub_gr +CVC:Oth_inv + CVC:Pub_gr:Oth_inv, 
                  data=newhaz1, cluster=ID)
 
 summary(myCph1s)
+
 # Check assumptions:
 # If no variables are significant, 
 # proportional hazards assumption is valid
@@ -139,8 +158,8 @@ myFitpub <- survfit(Surv(tstart,tstop,success) ~ Pub_gr,
                     data=newhaz1, cluster=ID)
 
 # Cumulative hazard plots faceted by year founded
-ggsurvplot_facet(myFit, data = newhaz1, fun = "cumhaz", conf.int = TRUE, facet.by = "Year.Founded",
-                 title = 'Corporate Investment Impact on Exits', font.title = c(11),
+ggsurvplot_facet(myFit, data = newhaz1, conf.int = TRUE, facet.by = "Year.Founded",
+                 #title = 'Corporate Investment Impact on Exits', font.title = c(11),
                  font.x = c(7), font.y = c(7), font.tickslab = c(7),
                  censor = FALSE,
                  legend.title = '', legend = 'bottom',
@@ -149,10 +168,10 @@ ggsurvplot_facet(myFit, data = newhaz1, fun = "cumhaz", conf.int = TRUE, facet.b
                  short.panel.labs = TRUE, panel.labs.font = list(size = 7),
                  xlab = 'Time since founding (yrs)',
                  ggtheme = theme_minimal()) 
-ggsave(paste0(getwd(), "/figs/model1_s_yrfound.png"), width = 6.5, height = 5)
+ggsave(paste0(getwd(), "/figs/model1_s_yrfound_surv.png"), width = 6.5, height = 5)
 
 ggsurvplot_facet(myFitpub, data = newhaz1, fun = "cumhaz", conf.int = TRUE, facet.by = "Year.Founded",
-                 title = 'Public Grant Impact on Exits', font.title = c(11),
+                # title = 'Public Grant Impact on Exits', font.title = c(11),
                  font.x = c(7), font.y = c(7), font.tickslab = c(7),
                  censor = FALSE,
                  legend.title = '', legend = 'bottom',
@@ -164,10 +183,11 @@ ggsurvplot_facet(myFitpub, data = newhaz1, fun = "cumhaz", conf.int = TRUE, face
 ggsave(paste0(getwd(), "/figs/model1_s_yrfound_pub.png"), width = 6.5, height = 5)
 
 # Cumulative hazard plots faceted by sectors 
-ggsurvplot_facet(myFit, data = newhaz1, fun = "cumhaz", conf.int = TRUE, 
-                 facet.by = "Sector", ylim = c(0,1.5),
-                 title = 'Corporate Investment Impact on Exits', 
-                 font.title = c(9), font.x = c(7), font.y = c(7), 
+ggsurvplot_facet(myFit, data = newhaz1, conf.int = TRUE, #fun = 'cumhaz',
+                 facet.by = "Sector", ylim = c(0,1.0),
+                # title = 'Corporate Investment Impact on Exits', 
+                # font.title = c(9), 
+                 font.x = c(7), font.y = c(7), 
                  font.tickslab = c(7), censor = FALSE,
                  palette = c('#b2182b','#2166ac'),
                  legend.labs = c('No Corporate Investment','Corporate Investment'),
@@ -177,10 +197,13 @@ ggsurvplot_facet(myFit, data = newhaz1, fun = "cumhaz", conf.int = TRUE,
                  ggtheme = theme_minimal()) +
   theme(legend.text=element_text(size=7),
         legend.margin=margin(t=0, r=0, b=0, l=0, unit="mm"),
-        legend.position="bottom")
-ggsave(paste0(getwd(), "/figs/model1_s_sectors.png"), width = 6.5, height = 5)
+        legend.position="bottom",
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank())
+ggsave(paste0(getwd(), "/figs/model1_s_sectors_surv.png"), width = 6.5, height = 5)
 
 
+# Selected sectors for Figure 4
 sect_check <- newhaz1 %>% filter(Sector %in% c('energy efficiency','transportation',
                                                'advanced materials','other cleantech',
                                                'solar','agriculture & food'))
@@ -195,28 +218,9 @@ myFit <- survfit(Surv(tstart,tstop,success) ~ CVC,
 myFitpub <- survfit(Surv(tstart,tstop,success) ~ Pub_gr,
                     data=sect_check, cluster=ID)
 
-#ggsurv <- ggsurvplot(myFitpub, fun = "cumhaz", conf.int = TRUE)
-#ggsurv$plot +theme_bw() + facet_grid(~Sector) + theme(legend.position="none")
-
-sect_s_corp <- ggsurvplot_facet(myFit, data = sect_check, fun = "cumhaz", conf.int = TRUE, 
-                                facet.by = "Sector", nrow = 1, ylim = c(0,1.5),
-                                title = 'b. Corporate Investment Impact on Exits', 
-                                font.title = c(9), font.x = c(7), font.y = c(7), 
-                                font.tickslab = c(7), censor = FALSE,
-                                palette = c('#b2182b','#2166ac'),
-                                legend.labs = c('No Corporate\nInvestment','Corporate\nInvestment'),
-                                short.panel.labs = TRUE, panel.labs.font = list(size = 7),
-                                legend.title = '', legend = c('bottom'),
-                                xlab = 'Time since founding (yrs)',
-                                ggtheme = theme_minimal()) +
-  theme(legend.text=element_text(size=7),
-        legend.margin=margin(t=0, r=0, b=0, l=0, unit="mm"),
-        legend.position="right")
-#ggsave(paste0(getwd(), "/figs/model1_s_sectors.png"), width = 3, height = 6)
-
-sect_s_pub <- ggsurvplot_facet(myFitpub, data = sect_check, fun = "cumhaz", conf.int = TRUE, 
-                               facet.by = "Sector", nrow = 1, ylim = c(0,1.5), 
-                               title = 'a. Public Grant Impact on Exits', 
+sect_s_pub_surv <- ggsurvplot_facet(myFitpub, data = sect_check, conf.int = TRUE, #fun = "cumhaz", 
+                               facet.by = "Sector", nrow = 1, ylim = c(0,1.0), 
+                               title = 'a. Relationship between Public Grants and Start-up Exits', 
                                font.title = c(9), font.x = c(7), font.y = c(7), 
                                font.tickslab = c(7), censor = FALSE,
                                palette = c('#b2182b','#2166ac'),
@@ -227,17 +231,42 @@ sect_s_pub <- ggsurvplot_facet(myFitpub, data = sect_check, fun = "cumhaz", conf
                                ggtheme = theme_minimal()) +
   theme(legend.text=element_text(size=7),
         legend.margin=margin(t=0, r=0, b=0, l=0, unit="mm"),
-        legend.position="right")
+        legend.position="right",
+        axis.line = element_line(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank())
 #ggsave(paste0(getwd(), "/figs/model1_s_sectors_pub.png"), width = 3, height = 6)
 
-
+sect_s_corp_surv <- ggsurvplot_facet(myFit, data = sect_check, conf.int = TRUE, #fun = "cumhaz", 
+                                facet.by = "Sector", nrow = 1, ylim = c(0,1.0),
+                                title = 'b. Relationship between Corporate Investment and Start-up Exits', 
+                                font.title = c(9), font.x = c(7), font.y = c(7), 
+                                font.tickslab = c(7), censor = FALSE,
+                                palette = c('#b2182b','#2166ac'),
+                                legend.labs = c('No Corporate\nInvestment','Corporate\nInvestment'),
+                                short.panel.labs = TRUE, panel.labs.font = list(size = 7),
+                                legend.title = '', legend = c('bottom'),
+                                xlab = 'Time since founding (yrs)',
+                                ggtheme = theme_minimal()) +
+  theme(legend.text=element_text(size=7),
+        legend.margin=margin(t=0, r=0, b=0, l=0, unit="mm"),
+        legend.position="right",
+        axis.line = element_line(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank())
+#ggsave(paste0(getwd(), "/figs/model1_s_sectors.png"), width = 3, height = 6)
 
 #################################################
 # Failure - Cox proportional hazards regression #
 #################################################
 myCph1f <- coxph(Surv(tstart,tstop,failure) ~ CVC + Oth_inv +
                    Pub_gr + patent_time + Location + strata(Sector) +
-                   strata(Year.Founded), 
+                   strata(Year.Founded),# + Pub_gr:CVC + Oth_inv:Pub_gr + 
+                 #  Oth_inv:CVC + CVC:Oth_inv:Pub_gr, 
                  data=newhaz1, cluster=ID)
 
 summary(myCph1f)
@@ -295,24 +324,10 @@ myFit <- survfit(Surv(tstart,tstop,failure) ~ CVC,
 myFitpub <- survfit(Surv(tstart,tstop,failure) ~ Pub_gr,
                     data=sect_check, cluster=ID)
 
-sect_f_corp <- ggsurvplot_facet(myFit, data = sect_check, fun = "cumhaz", conf.int = TRUE, 
-                                facet.by = "Sector", censor = FALSE, ylim = c(0,1.5),
-                                title = 'd. Corporate Investment Impact on Failure', 
-                                font.title = c(9), font.x = c(7), font.y = c(7), 
-                                font.tickslab = c(7), nrow =1,
-                                palette = c('#b2182b','#2166ac'),
-                                legend.labs = c('No Corporate\nInvestment','Corporate\nInvestment'),
-                                short.panel.labs = TRUE, panel.labs.font = list(size = 7),
-                                legend.title = '', legend = c('bottom'),
-                                xlab = 'Time since founding (yrs)',
-                                ggtheme = theme_minimal()) +
-  theme(legend.text=element_text(size=7),
-        legend.margin=margin(t=0, r=0, b=0, l=0, unit="mm"),
-        legend.position="right")
 
-sect_f_pub <- ggsurvplot_facet(myFitpub, data = sect_check, fun = "cumhaz", conf.int = TRUE, 
-                               facet.by = "Sector", censor = FALSE, ylim = c(0,1.5),
-                               title = 'c. Public Grant Impact on Failure',
+sect_f_pub_surv <- ggsurvplot_facet(myFitpub, data = sect_check, conf.int = TRUE, #fun = "cumhaz",
+                               facet.by = "Sector", censor = FALSE, ylim = c(0,1.0),
+                               title = 'c. Relationship between Public Grants and Start-up Failure',
                                font.title = c(9), font.x = c(7), font.y = c(7), 
                                font.tickslab = c(7), nrow = 1,
                                palette = c('#b2182b','#2166ac'),
@@ -323,7 +338,33 @@ sect_f_pub <- ggsurvplot_facet(myFitpub, data = sect_check, fun = "cumhaz", conf
                                ggtheme = theme_minimal()) +
   theme(legend.text=element_text(size=7),
         legend.margin=margin(t=0, r=0, b=0, l=0, unit="mm"),
-        legend.position="right")
+        legend.position="right",
+        axis.line = element_line(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank())
+
+sect_f_corp_surv <- ggsurvplot_facet(myFit, data = sect_check, conf.int = TRUE, #fun = "cumhaz",
+                                     facet.by = "Sector", censor = FALSE, ylim = c(0,1.0),
+                                     title = 'd. Relationship between Corporate Investment and Start-up Failure', 
+                                     font.title = c(9), font.x = c(7), font.y = c(7), 
+                                     font.tickslab = c(7), nrow =1,
+                                     palette = c('#b2182b','#2166ac'),
+                                     legend.labs = c('No Corporate\nInvestment','Corporate\nInvestment'),
+                                     short.panel.labs = TRUE, panel.labs.font = list(size = 7),
+                                     legend.title = '', legend = c('bottom'),
+                                     xlab = 'Time since founding (yrs)',
+                                     ggtheme = theme_minimal()) +
+  theme(legend.text=element_text(size=7),
+        legend.margin=margin(t=0, r=0, b=0, l=0, unit="mm"),
+        legend.position="right",
+        axis.line = element_line(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank())
+
 
 ##############################################################
 #                                                            #
@@ -504,8 +545,9 @@ termplot(myCph2s, term=2, se=TRUE, col.term=1, col.se=1)
 
 myFit <- survfit(Surv(tstart,tstop,success) ~ Pub_gr,
                  data=newhaz4, cluster=ID)
-ggsurvplot(myFit, data = newhaz4, fun = "cumhaz", conf.int = TRUE, 
-                 title = 'Public Grant Impact on Success',
+ggsurvplot(myFit, data = newhaz4, fun = "cumhaz", 
+           conf.int = TRUE, 
+           title = 'Public Grant Impact on Success',
            ggtheme = theme_minimal())
 ggsave(paste0(getwd(), "/model4_s_pub.png"), width = 6, height = 4)
 
@@ -600,7 +642,11 @@ ggsurvplot(myFitf, data = newhaz5, fun = "cumhaz", conf.int = TRUE,
 # Combined plots
 
 ggarrange(sect_s_pub,sect_s_corp,sect_f_pub,sect_f_corp, ncol = 1, nrow = 4, common.legend = FALSE)
-ggsave(paste0(getwd(), "/figs/Fig3_sectors.png"), width = 7, height = 7.5)
+ggsave(paste0(getwd(), "/figs/Fig4_sectors.png"), width = 7, height = 7.5)
+
+ggarrange(sect_s_pub_surv,sect_s_corp_surv,
+          sect_f_pub_surv,sect_f_corp_surv, ncol = 1, nrow = 4, common.legend = FALSE)
+ggsave(paste0(getwd(), "/figs/Fig4_sectors_surv_line.png"), width = 7, height = 7.5)
 
 ggarrange(s2$plot, s3$plot, ncol = 2, nrow = 1, common.legend = TRUE, legend = c('bottom'))
 ggsave(paste0(getwd(), "/figs/mod2_mod3_s.png"), width = 7, height = 3.5)
