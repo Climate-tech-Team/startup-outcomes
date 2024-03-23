@@ -150,6 +150,7 @@ ggcoxdiagnostics(Cph1s_amt, type = "dfbeta",
 #################################################
 # Failure - Cox proportional hazards regression #
 #################################################
+# Count variables
 Cph1f <- coxph(Surv(tstart,tstop,failure) ~ CVC + Oth_inv +
                    Pub_gr + patent_time + Location + strata(Sector) +
                    strata(Year.Founded), 
@@ -258,7 +259,7 @@ Cph3f <- coxph(Surv(tstart,tstop,failure) ~ CVC + Oth_inv +
 
 summary(Cph3f)
 
-# Dollar investment amounts for model 2 success
+# Dollar investment amounts for model 3 success
 Cph3s_amt <- coxph(Surv(tstart,tstop,success) ~ cvc_amt + oth_amt +
                      patent_time + Location + strata(Sector) + 
                      strata(Year.Founded),
@@ -266,7 +267,7 @@ Cph3s_amt <- coxph(Surv(tstart,tstop,success) ~ cvc_amt + oth_amt +
 
 summary(Cph3s_amt)
 
-# Dollar investment amounts for model 2 failure
+# Dollar investment amounts for model 3 failure
 Cph3f_amt <- coxph(Surv(tstart,tstop,failure) ~ cvc_amt + oth_amt +
                      patent_time + Location + strata(Sector) + 
                      strata(Year.Founded),
